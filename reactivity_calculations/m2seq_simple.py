@@ -1,0 +1,233 @@
+#!/usr/bin/env python
+###############################################################################
+# Analysis of 2D signal in mutational profiling sequencing data (M2seq)
+###############################################################################
+#
+# M2seq
+#
+# This script takes raw FASTQ files from a sequencing run and performs the following:
+#
+# 1. Demultiplexes the raw FASTQs using user-provided barcodes using Novobarcode
+# 2. Uses the demultiplexed FASTQs and the WT sequence to generate 2D mutational profiling data
+#       Use ShapeMapper for read alignment to reference sequence and generation of mutation strings
+# 3. Calculates 2D datasets and outputs RDAT files using simple_to_rdat.py
+#
+# (C) Clarence Cheng, 2015-2016
+# (C) Joseph Yesselman, Rhiju Das, 2017
+
+import os, sys, time
+import shutil
+import argparse
+import glob
+
+
+# https://stackoverflow.com/questions/377017/test-if-executable-exists-in-python
+def which(program):
+    import os
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def check_required_programs():
+    print "checking required external programs"
+    if which('novobarcode') is None:
+        raise ValueError("novobarcode program is not installed but required!, "
+                         "please install at: http://www.novocraft.com/support/download/")
+    else:
+        print "novobarcode is detected ..."
+
+
+    if which("ShapeMapper.py") is None:
+        raise ValueError("ShapeMapper 1.2 is required, software developed by the Weeks lab at UNC Chapel Hill for 1D "
+                         "analysis ofmutational profiling data. Available at http://www.chem.unc.edu/rna/software.html "
+                         "(Make sure you go into that directory and run make.)")
+    else:
+        print "ShapeMapper is detected ..."
+
+
+    if which("bowtie2") is None:
+        raise ValueError("BowTie2 is needed for ShapeMapper. Available here:"
+                         " https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.2.9/. Version 2.2.9 works.")
+    else:
+        print "BowTie2 is detected ..."
+
+def parse_commandline_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('sequencefile', type=argparse.FileType('r'))
+    parser.add_argument('--config', type=argparse.FileType('r'))
+    parser.add_argument('--name', type=str, default='PLACEHOLDER')
+    parser.add_argument('--offset', type=int, default=0)
+    parser.add_argument('--outprefix', type=str, default='out')
+
+    args = parser.parse_args()
+    if args.name == 'PLACEHOLDER':
+        seq_file = args.sequencefile.name.split("/")[-1]
+        name = seq_file.split(".")[0]
+        args.name = name
+
+    return args
+
+
+def timeStamp():
+    t = time.localtime()
+    month = t.tm_mon
+    day = t.tm_mday
+    hour = t.tm_hour
+    minute = t.tm_min
+    second = t.tm_sec
+    return '%i:%i:%i, %i/%i'%(hour, minute, second, month, day)
+
+
+def make_dir(path):
+    try:
+        os.mkdir(path)
+    except OSError:
+        if not os.path.isdir(path):
+            raise
+
+def get_sequence(sequencefile):
+    sequencefile_lines = sequencefile.readlines()
+
+    sequence = sequencefile_lines[1].strip().upper()
+    # check for Us
+    for e in sequence:
+        if e == 'U':
+            raise ValueError("your sequence in " + sequencefile + " has Us not Ts please fix!" )
+
+    return sequence
+
+def run_shapemapper(args):
+    os.chdir('2_ShapeMapper')
+    print 'Starting ShapeMapper analysis'
+    os.system("ShapeMapper.py " +  args.config.name)
+
+    f_log.write('\nGenerating simple files at: ' + timeStamp())
+    outdir = currdir + '/2_ShapeMapper/output/mutation_strings_oldstyle/'
+    for file in os.listdir(outdir):
+        if file.endswith('.txt'):
+            muts_to_simple( outdir + file )
+    f_log.write('\nFinished generating simple files at: ' + timeStamp())
+
+    os.chdir("..")
+
+def valid_shapemapper_output(args):
+    pass
+
+def muts_to_simple(mutsfile):
+    simplename = mutsfile + '.simple'
+    f_simple = open(simplename, 'w')
+
+    start_pos = []
+    count = 0
+    f = open(mutsfile)
+    lines = f.readlines()
+    f.close()
+
+    for line in lines:
+        fields = line.strip().split('\t')
+        if len(fields) < 3: continue
+
+        start_pos = int(fields[0])
+        end_pos = int(fields[1])
+        mut_string = fields[2]
+        assert (len(mut_string) == (int(fields[1]) - int(fields[0]) + 1))
+
+        count += 1  # record total sequences
+        if count % 50000 == 0: print 'Reading line number ', count
+
+        # ignore non-overlapping reads
+        temp = mut_string.strip('s~')
+        non_overlap = 0
+        for i in xrange(len(temp)):
+            if temp[i] == 's' or temp[i] == '~':
+                if temp[i + 1] == '|':
+                    non_overlap = 1
+                    break
+
+        # adjust start and end positions
+        if non_overlap == 0:
+            for i in xrange(len(mut_string)):
+                if mut_string[i] == 's' or mut_string[i] == '~':
+                    start_pos += 1
+                else:
+                    break
+
+            for i in reversed(xrange(len(mut_string))):
+                if mut_string[i] == 's' or mut_string[i] == '~':
+                    end_pos -= 1
+                else:
+                    break
+
+            simple_line = mut_string.strip('s~').replace('|', '0').replace('~', '0').replace('A', '1').replace('T','1').replace('G', '1').replace('C', '1').replace('-', '1')
+
+            f_simple.write(str(start_pos) + '\t' + str(end_pos) + '\t' + simple_line + '\n')
+
+    print '\nSimple file created: ' + f_simple.name
+    print '\nTotal number of sequences: ' + str(count)
+
+    f_simple.flush()
+    f_simple.close()
+
+
+def m2_seq_final_analysis(args, f_log):
+    print 'Starting M2seq analysis'
+    f_log.write('\nStarting M2seq analysis at: ' + timeStamp() + '\n')
+
+    print os.getcwd()
+    simple_files = glob.glob('2_ShapeMapper/output/mutation_strings_oldstyle/*.simple')
+    for sf in simple_files:
+        print sf
+        f_name = sf.split("/")[-1]
+        os.system('ln -s ' + os.path.abspath(sf) + " " + '3_M2seq/simple_files/' + f_name)
+
+    os.chdir(currdir + '/3_M2seq/simple_files')
+    simple_files = glob.glob('*.simple')
+    for sf in simple_files:
+        f_name = sf.split('.')[0]
+        os.system(base_dir + "/simple_to_rdat.py ../../" + args.sequencefile.name + " --simplefile " + sf + " --name " +
+                  args.name + " --offset " + str(args.offset) + " --outprefix " + f_name)
+    os.chdir(currdir)
+
+
+check_required_programs()
+
+currdir = os.getcwd()
+f_log = open(currdir + '/' + 'AnalysisLog.txt', 'w')
+
+# make directories now
+make_dir(currdir + '/3_M2seq')
+make_dir(currdir + '/3_M2seq/simple_files')
+
+# TODO move this into settings.py
+file_path = os.path.realpath(__file__)
+spl = file_path.split("/")
+base_dir = "/".join(spl[:-1])
+
+args = parse_commandline_args()
+
+sequence = get_sequence(args.sequencefile)
+
+# run shaper mapper
+run_shapemapper(args)
+
+# run m2seq analysis
+m2_seq_final_analysis(args, f_log)
+
+f_log.close()
+
+
+
