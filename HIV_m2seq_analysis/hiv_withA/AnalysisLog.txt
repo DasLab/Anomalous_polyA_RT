@@ -1,0 +1,8 @@
+Primers:
+RTB004	TGCGCCATTGCT
+RTB005	ACAAAATGGTGG
+RTB006	CTGCGTGCAAAC
+RTB007	GATTTGCACCTA
+Generating simple files at: 16:11:42, 1/6
+Finished generating simple files at: 16:11:58, 1/6
+Starting M2seq analysis at: 16:11:58, 1/6

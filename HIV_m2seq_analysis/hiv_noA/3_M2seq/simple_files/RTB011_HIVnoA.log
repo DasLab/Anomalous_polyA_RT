@@ -1,0 +1,22 @@
+Current directory: /home/vedtopkar/projects/polyA_paper/072017_AnnVed_Hox_GIR1UV_HIV/hiv_noA/3_M2seq/simple_files
+
+Simple data file provided:	RTB011_HIVnoA.txt.simple
+Generating 2D data from simple data file.
+
+Starting analysis from simple file at 2020/01/06 17:01:03
+
+
+Total number of sequences: 467675
+Number of sequences used for RT stop reactivities: 427798
+Full-length filter: alignment must extend to at least position 10
+Quality filter (use for 2D data if N or fewer mismatches to WT): N = 10
+Number of sequences passing full-length and quality filters: 427446
+Number of sequences used for 2D data (at least 1 mutation): 427019
+
+RDAT file created: /home/vedtopkar/projects/polyA_paper/072017_AnnVed_Hox_GIR1UV_HIV/hiv_noA/3_M2seq/simple_files/RTB011_HIVnoA_ HIVnoA.stop_reactivity.rdat
+RDAT file created: /home/vedtopkar/projects/polyA_paper/072017_AnnVed_Hox_GIR1UV_HIV/hiv_noA/3_M2seq/simple_files/RTB011_HIVnoA_ HIVnoA.mut_reactivity.rdat
+RDAT file created: /home/vedtopkar/projects/polyA_paper/072017_AnnVed_Hox_GIR1UV_HIV/hiv_noA/3_M2seq/simple_files/RTB011_HIVnoA.reactivity.rdat
+RDAT file created: /home/vedtopkar/projects/polyA_paper/072017_AnnVed_Hox_GIR1UV_HIV/hiv_noA/3_M2seq/simple_files/RTB011_HIVnoA_ HIVnoA.raw.rdat
+
+Finished analysis from simple file at 2020/01/06 17:01:47
+
