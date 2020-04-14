@@ -18,5 +18,8 @@ The `reactivity_calculations` directory contains the scripts used to calculate r
 ## HIV 3' UTR M2-seq
 The `HIV_m2seq_analysis` directory contains the output of the [M2-seq pipeline](https://github.com/ribokit/m2seq) when run on the sequencing data for *in vitro* transcribed HIV 3' UTR (both with and without a 3' polyA sequence).
 
+## MATLAB scripts for capillary electrophoresis data
+The `CE_analysis_matlab` folder contains a variety of scripts that were used to analyze capillary electrophoresis (CE) data and generate many of the CE-based figures in the paper. The `output` folder contains output figures from these scripts.
+
 ## Raw Sequencing Data Download
 Raw sequencing data can be found in GEO and the Stanford Data Repository (uploads are currently pending). This README will be updated with the relevant information once data deposition to these locations is complete.
