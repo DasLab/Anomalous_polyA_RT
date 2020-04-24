@@ -21,5 +21,7 @@ The `HIV_m2seq_analysis` directory contains the output of the [M2-seq pipeline](
 ## MATLAB scripts for capillary electrophoresis data
 The `CE_analysis_matlab` folder contains a variety of scripts that were used to analyze capillary electrophoresis (CE) data and generate many of the CE-based figures in the paper. The `output` folder contains output figures from these scripts.
 
-## Raw Sequencing Data Download
-Raw sequencing data can be found in GEO and the Stanford Data Repository (uploads are currently pending). This README will be updated with the relevant information once data deposition to these locations is complete.
+## Additional Data Downloads
+* Raw sequencing data can be found in GEO at [GSE 149061](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE149061) and a Stanford Data Repository [persistent URL](https://purl.stanford.edu/xm553fz5401). 
+* Additional MATLAB analysis scripts and paper figures are compiled in a [DropBox archive](https://www.dropbox.com/sh/re2py0pfvyr0h0p/AACjQ_Otw-pKC34k6r2exYSZa?dl=0). 
+* Capillary electrophoresis data are also archived at the [RNA Mapping Database](https://rmdb.stanford.edu/search/?sstring=polyA)
